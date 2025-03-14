@@ -12,10 +12,10 @@ Next are //notes. //notes are lines that start with //C-style comments. Notes ar
 
 Lastly are #comments. #comments are lines that belong in the source document but which are not wanted in the final document -- perhaps some notes about characters, or maybe your thoughts while writing the section. These will be removed by ``typ`` and so will not make it into a final document typeset with the ``typset`` pipeline.
 
-## ``lj`` -- line join
-``lj``, or line join, joins lines of text where each line is assumed to be a sentence on its own line.
+## ``ljn`` -- line join
+``ljn``, or line join, joins lines of text where each line is assumed to be a sentence on its own line.
 
-The following example demonstrates the use of ``lj``. Consider Example.txt included in this repository.
+The following example demonstrates the use of ``ljn``. Consider Example.txt included in this repository.
 ```
 $ cat Example.txt
 THIS IS THE TITLE OF THIS DOCUMENT
@@ -35,7 +35,7 @@ This is another line in the document! Wow!
 This is the last line in the document.
 Oops, there's one more.
 ```
-Applying ``lj`` with no flags produces:
+Applying ``ljn`` with no flags produces:
 ```
 $ lj Example.txt
 THIS IS THE TITLE OF THIS DOCUMENT
@@ -55,10 +55,10 @@ The newline is kept for consistency as depending on what you do with this text, 
 ## ``typ`` -- typeset text
 ``typ``, or typeset, typesets lines of text where each line is a paragraph with multiple sentences.
 
-This example demonstrates the use of ``typ``, here applied to the above output from ``lj`` on Example.txt included with this repository.
+This example demonstrates the use of ``typ``, here applied to the above output from ``ljn`` on Example.txt included with this repository.
 Note a shorter line length has been chosen to better show the line-wrapping capability. Defaults is a line width of 84.
 ```
-$ lj Example.txt | typ -w40
+$ ljn Example.txt | typ -w40
    THIS IS THE TITLE OF THIS DOCUMENT
 This is a note about the nature of this
 document
@@ -85,7 +85,7 @@ Some flags can also be used to disable centering notes and stripping empty lines
 This example demonstrates the use of ``pag`` on the output of the above ``typ`` example, using Example.txt included with this repository.
 As before, a maximum page length and width different from the defaults of 66 and 84 respectively.
 ```
-$ lj Example.txt | typ -w40 | pag -L10 -w40
+$ ljn Example.txt | typ -w40 | pag -L10 -w40
 
 9/16/2024                         Page 1
 

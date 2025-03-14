@@ -28,7 +28,7 @@ try:
         sys.argv[1:], short_options, long_options
     )
 except getopt.GetoptError as error:
-    print(f"typset: '-{error.opt}': Option not recognized")
+    print(f"typset: '-{error.opt}': Option not recognized", file=sys.stderr)
     sys.exit(1)
 
 for option in options:
@@ -48,7 +48,7 @@ for option in options:
             if PAGE_LENGTH < 2:
                 raise ValueError
         except ValueError:
-            print(f"typset: '{PAGE_LENGTH}': Invalid page length")
+            print(f"typset: '{PAGE_LENGTH}': Invalid page length", file=sys.stderr)
             sys.exit(1)
     elif option == "-w" or option == "--page-width":
         try:
@@ -56,18 +56,18 @@ for option in options:
             if PAGE_WIDTH < 8:
                 raise ValueError
         except ValueError:
-            print(f"typset: '{PAGE_WIDTH}': Invalid page width")
+            print(f"typset: '{PAGE_WIDTH}': Invalid page width", file=sys.stderr)
             sys.exit(1)
 
 if not positional_arguments:
     if stat.S_ISFIFO(os.fstat(0).st_mode):
         input_file = "-"
     else:
-        print("typset: Missing operand")
+        print("typset: Missing operand", file=sys.stderr)
         sys.exit(1)
 else:
     if len(positional_arguments) > 1:
-        print("typset: Too many arguments")
+        print("typset: Too many arguments", file=sys.stderr)
         sys.exit(1)
     else:
         input_file = positional_arguments[0]
@@ -85,14 +85,14 @@ else:
     elif os.path.isfile(f"{os.getcwd}/{input_file}"):
         input_file = f"{os.getcwd}/{input_file}"
     elif os.path.isdir(input_file) or os.path.isdir(f"{os.getcwd}/{input_file}"):
-        print(f"typset: {input_file}: Is a directory")
+        print(f"typset: {input_file}: Is a directory", file=sys.stderr)
         sys.exit(1)
     else:
-        print(f"typset: {input_file}: No such file or directory")
+        print(f"typset: {input_file}: No such file or directory", file=sys.stderr)
         sys.exit(1)
 
 pipeline = os.popen(
-    f"lj {input_file} | typ -t4 -M4 -w{PAGE_WIDTH} | pag -L{PAGE_LENGTH} -M4 -w{PAGE_WIDTH}",
+    f"ljn {input_file} | bib | typ -M4 -w{PAGE_WIDTH} | pag -L{PAGE_LENGTH} -M4 -w{PAGE_WIDTH}",
 )
 if temp_file:
     os.remove(input_file)

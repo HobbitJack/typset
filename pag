@@ -9,13 +9,12 @@ import getopt
 import stat
 import os
 import sys
-import string
 
 HEADER_MODE = True
 MLA_HEADER_MODE = False
 US_MODE = True
 NAME = ""
-TODAY = datetime.datetime.today()
+TODAY = datetime.date.today()
 
 FIRST_PAGE_NUMBER = 1
 PAGE_LENGTH = 66  # Three lines taken off for spacing at the bottom
@@ -23,8 +22,9 @@ PAGE_LENGTH = 66  # Three lines taken off for spacing at the bottom
 PAGE_WIDTH = 84
 MARGIN_WIDTH = 0
 
-short_options = "HL:mM:n:N:Uw:hv"
+short_options = "D:HL:mM:n:N:Uw:hv"
 long_options = [
+    "date=",
     "no-header-mode",
     "page-length=",
     "mla-header-mode",
@@ -42,7 +42,7 @@ try:
         sys.argv[1:], short_options, long_options
     )
 except getopt.GetoptError as error:
-    print(f"pag: '-{error.opt}': Option not recognized")
+    print(f"pag: '-{error.opt}': Option not recognized", file=sys.stderr)
     sys.exit(1)
 
 for option in options:
@@ -54,8 +54,10 @@ for option in options:
         print("Paginate a document")
         sys.exit(0)
     elif option == "-v" or option == "--version":
-        print("pag v1.0.0")
+        print("pag (Typset) v1.0.0")
         sys.exit(0)
+    elif option == "-D" or option == "--date":
+        TODAY = datetime.date.fromisoformat(argument)
     elif option == "-H" or option == "--no-header-mode":
         HEADER_MODE = False
     elif option == "-L" or option == "--page-length":
@@ -64,7 +66,7 @@ for option in options:
             if PAGE_LENGTH < 2:
                 raise ValueError
         except ValueError:
-            print(f"pag: '{PAGE_LENGTH}': Invalid page length")
+            print(f"pag: '{PAGE_LENGTH}': Invalid page length", file=sys.stderr)
             sys.exit(1)
     elif option == "-m" or option == "--mla-header-mode":
         MLA_HEADER_MODE = True
@@ -74,7 +76,7 @@ for option in options:
             if MARGIN_WIDTH < 0:
                 raise ValueError
         except ValueError:
-            print(f"pag: '{MARGIN_WIDTH}': Invalid page length")
+            print(f"pag: '{MARGIN_WIDTH}': Invalid page length", file=sys.stderr)
             sys.exit(1)
     elif option == "-n" or option == "--first-page-number":
         try:
@@ -82,7 +84,7 @@ for option in options:
             if FIRST_PAGE_NUMBER < 0:
                 raise ValueError
         except ValueError:
-            print(f"pag: '{FIRST_PAGE_NUMBER}': Invalid page number")
+            print(f"pag: '{FIRST_PAGE_NUMBER}': Invalid page number", file=sys.stderr)
             sys.exit(1)
     elif option == "-N" or option == "--name":
         NAME = argument.strip().split(" ")[-1]
@@ -92,7 +94,7 @@ for option in options:
             if PAGE_WIDTH < 8:
                 raise ValueError
         except ValueError:
-            print(f"pag: '{PAGE_WIDTH}': Invalid page width")
+            print(f"pag: '{PAGE_WIDTH}': Invalid page width", file=sys.stderr)
             sys.exit(1)
 
 
@@ -106,11 +108,11 @@ if not positional_arguments:
     if stat.S_ISFIFO(os.fstat(0).st_mode):
         input_file = "-"
     else:
-        print("pag: Missing operand")
+        print("pag: Missing operand", file=sys.stderr)
         sys.exit(1)
 else:
     if len(positional_arguments) > 1:
-        print("pag: Too many arguments")
+        print("pag: Too many arguments", file=sys.stderr)
         sys.exit(1)
     else:
         input_file = positional_arguments[0]
@@ -123,10 +125,10 @@ else:
     elif os.path.isfile(f"{os.getcwd}/{input_file}"):
         input_file = f"{os.getcwd}/{input_file}"
     elif os.path.isdir(input_file) or os.path.isdir(f"{os.getcwd}/{input_file}"):
-        print(f"pag: {input_file}: Is a directory")
+        print(f"pag: {input_file}: Is a directory", file=sys.stderr)
         sys.exit(1)
     else:
-        print(f"pag: {input_file}: No such file or directory")
+        print(f"pag: {input_file}: No such file or directory", file=sys.stderr)
         sys.exit(1)
 
     with open(input_file, mode="r", encoding="utf8") as text_file:
@@ -169,7 +171,9 @@ for line in all_lines:
 
     print(line)
     lines_on_page += 1
-    if lines_on_page == PAGE_LENGTH:
+    if lines_on_page == PAGE_LENGTH or (
+        len({char for char in line.strip()}) == 1 and line.strip()[0] == "-"
+    ):
         print("\f", end="")
         in_header = True
         lines_on_page = 0
