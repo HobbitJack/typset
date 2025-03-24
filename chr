@@ -10,7 +10,7 @@ import os
 import sys
 
 SEQUENCES = {
-    "\\": "\\"
+    "\\": "\\",
     "alpha": "α",
     "beta": "β",
     "gamma": "γ",
