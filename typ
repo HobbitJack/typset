@@ -65,7 +65,7 @@ for option in options:
         )
         sys.exit(0)
     elif option == "-v" or option == "--version":
-        print("typ (Typset) v1.0.0")
+        print("typ (Typset) v2.0.0")
         sys.exit(0)
     elif option == "-c" or option == "--no-center-chapters":
         CENTER_CHAPTERS = False

@@ -40,7 +40,7 @@ for option in options:
         print("Typeset text")
         sys.exit(0)
     elif option == "-v" or option == "--version":
-        print("typset (typeset) v1.0.0")
+        print("typset (typeset) v2.0.0")
         sys.exit(0)
     elif option == "-L" or option == "--page-length":
         try:
@@ -92,7 +92,7 @@ else:
         sys.exit(1)
 
 pipeline = os.popen(
-    f"ljn {input_file} | bib | typ -M4 -w{PAGE_WIDTH} | pag -L{PAGE_LENGTH} -M4 -w{PAGE_WIDTH}",
+    f"ljn {input_file} | chr | bib | typ -M4 -w{PAGE_WIDTH} | pag -L{PAGE_LENGTH} -M4 -w{PAGE_WIDTH}",
 )
 if temp_file:
     os.remove(input_file)

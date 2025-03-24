@@ -1,0 +1,184 @@
+#!/usr/bin/python
+# insert special characters
+
+# This program takes in a prose text file where each line is a paragraph.
+# It then looks for escape sequences '\Sequence'; and each match is replaced by
+# Note each line is treated independently.
+import getopt
+import stat
+import os
+import sys
+
+SEQUENCES = {
+    "alpha": "α",
+    "beta": "β",
+    "gamma": "γ",
+    "delta": "δ",
+    "epsilon": "ε",
+    "zeta": "ζ",
+    "eta": "η",
+    "theta": "θ",
+    "iota": "ι",
+    "kappa": "κ",
+    "lambda": "λ",
+    "mu": "μ",
+    "nu": "ν",
+    "xi": "ξ",
+    "omicron": "o",
+    "pi": "π",
+    "rho": "ρ",
+    "sigma": "σ",
+    "tau": "τ",
+    "upsilon": "υ",
+    "phi": "φ",
+    "chi": "χ",
+    "psi": "ψ",
+    "omega": "ω",
+    "Alpha": "Α",
+    "Beta": "Β",
+    "Gamma": "Γ",
+    "Delta": "Δ",
+    "Epsilon": "Ε",
+    "Zeta": "Ζ",
+    "Eta": "Η",
+    "Theta": "Θ",
+    "Iota": "Ι",
+    "Kappa": "Κ",
+    "Lambda": "Λ",
+    "Mu": "M",
+    "Nu": "Ν",
+    "Xi": "Ξ",
+    "Omicron": "O",
+    "Pi": "Π",
+    "Rho": "Ρ",
+    "Sigma": "Σ",
+    "Tau": "Τ",
+    "Upsilon": "Υ",
+    "Phi": "Φ",
+    "Chi": "Χ",
+    "Psi": "Ψ",
+    "Omega": "Ω",
+    "approx": "≈",
+    "pm": "±",
+    "mp": "∓",
+    "sqrt": "√",
+    "neq": "≠",
+    "gte": "≥",
+    "lte": "≤",
+    "tm": "™",
+    "cp": "©",
+    "inf": "∞",
+    "paragraph": "¶",
+    "section": "§",
+    "nabla": "∇",
+    "ex": "∃",
+    "nex": "∄",
+    "in": "∈",
+    "nin": "∉",
+    "member": "∋",
+    "wedge": "∧",
+    "vee": "∨",
+    "dag": "†",
+    "ddag": "‡",
+    "times": "×",
+    "cup": "∪",
+    "cap": "∩",
+    "uparrow": "↑",
+    "Uparrow": "⇑",
+    "downarrow": "↓",
+    "Downarrow": "⇓",
+    "leftarrow": "←",
+    "Leftarrow": "⇐",
+    "rightarrow": "→",
+    "Rightarrow": "⇒",
+}
+
+short_options = "Hhv"
+long_options = [
+    "sequences",
+    "help",
+    "version",
+]
+
+try:
+    options, positional_arguments = getopt.gnu_getopt(
+        sys.argv[1:], short_options, long_options
+    )
+except getopt.GetoptError as error:
+    print(f"chr: '-{error.opt}': Option not recognized", file=sys.stderr)
+    sys.exit(1)
+
+for option in options:
+    argument = option[1]
+    option = option[0]
+    if option == "-H" or option == "--sequences":
+        for entry, char in SEQUENCES.items():
+            print(f"{entry}\t{char}")
+        sys.exit(0)
+    if option == "-h" or option == "--help":
+        print("Usage: chr [FILE]")
+        print("Usage: chr -H")
+        print("Replace escape sequences with special characters.")
+        sys.exit(0)
+    elif option == "-v" or option == "--version":
+        print("chr (Typset) v2.0.0")
+        sys.exit(0)
+
+if not positional_arguments:
+    if stat.S_ISFIFO(os.fstat(0).st_mode):
+        input_file = "-"
+    else:
+        print("chr: Missing operand", file=sys.stderr)
+        sys.exit(1)
+else:
+    if len(positional_arguments) > 1:
+        print("chr: Too many arguments", file=sys.stderr)
+        sys.exit(1)
+    else:
+        input_file = positional_arguments[0]
+
+if input_file == "-":
+    all_lines = sys.stdin.read().splitlines()
+else:
+    if os.path.isfile(input_file):
+        pass
+    elif os.path.isfile(f"{os.getcwd}/{input_file}"):
+        input_file = f"{os.getcwd}/{input_file}"
+    elif os.path.isdir(input_file) or os.path.isdir(f"{os.getcwd}/{input_file}"):
+        print(f"chr: {input_file}: Is a directory", file=sys.stderr)
+        sys.exit(1)
+    else:
+        print(f"chr: {input_file}: No such file or directory", file=sys.stderr)
+        sys.exit(1)
+
+    with open(input_file, mode="r", encoding="utf8") as text_file:
+        all_lines = text_file.read().splitlines()
+
+for line in all_lines:
+    if "\\" not in line:
+        print(line)
+    else:
+        new_string = ""
+        escape = False
+        current_escape = ""
+        for char in line:
+            if not escape:
+                if char != "\\":
+                    new_string += char
+                else:
+                    escape = True
+                    current_escape = ""
+            else:
+                current_escape += char
+                possible_escapes = [
+                    key for key in SEQUENCES if key.startswith(current_escape)
+                ]
+                if not possible_escapes:
+                    escape = False
+                    new_string += "\\"
+                    new_string += current_escape
+                else:
+                    if current_escape in SEQUENCES:
+                        escape = False
+                        new_string += SEQUENCES[current_escape]
+        print(new_string)

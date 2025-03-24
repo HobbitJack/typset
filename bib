@@ -37,7 +37,7 @@ for option in options:
         )
         sys.exit(0)
     elif option == "-v" or option == "--version":
-        print("bib (Typset) v1.0.0")
+        print("bib (Typset) v2.0.0")
         sys.exit(0)
 
 if not positional_arguments:
@@ -72,7 +72,13 @@ else:
 
 found_bibliography = False
 for index, line in enumerate(all_lines):
-    if line.strip() in ["BIBLIOGRAPHY", "REFERENCES", "WORKS CITED"]:
+    if line.strip() in [
+        "BIBLIOGRAPHY",
+        "REFERENCES",
+        "WORKS CITED",
+        "ENDNOTES",
+        "FOOTNOTES",
+    ]:
         found_bibliography = index + 1
 
 bibliography = {}

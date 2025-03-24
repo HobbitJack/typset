@@ -44,7 +44,7 @@ for option in options:
         print("Join sentences in a file using empty lines as paragraph breaks")
         sys.exit(0)
     elif option == "-v" or option == "--version":
-        print("ljn (Typset) v1.0.0")
+        print("ljn (Typset) v2.0.0")
         sys.exit(0)
     elif option == "-c" or option == "--no-chapter-mode":
         CHAPTER_MODE = False
