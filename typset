@@ -40,7 +40,7 @@ for option in options:
         print("Typeset text")
         sys.exit(0)
     elif option == "-v" or option == "--version":
-        print("typset (typeset) v2.0.0")
+        print("typset (typeset) v2.1.0")
         sys.exit(0)
     elif option == "-L" or option == "--page-length":
         try:

@@ -53,4 +53,5 @@ Copyright (C) HobbitJack 2025
 # Recommended Software
 With the addition of the !shellout feature in v2.0.0, some extra software is useful for making better technical documents.
 I will include references to that software here as I find it:
-- `utftex`: 
+- `utftex`: Insert typeset ASCII equations into the text stream
+- `boxes`: Draw boxes around e.g. tables

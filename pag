@@ -54,7 +54,7 @@ for option in options:
         print("Paginate a document")
         sys.exit(0)
     elif option == "-v" or option == "--version":
-        print("pag (Typset) v2.0.0")
+        print("pag (Typset) v2.1.0")
         sys.exit(0)
     elif option == "-D" or option == "--date":
         TODAY = datetime.date.fromisoformat(argument)

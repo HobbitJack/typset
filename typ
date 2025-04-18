@@ -30,6 +30,7 @@ CENTER_COMMANDS = True
 DOUBLE_SPACE_PARAGRAPHS = False
 DOUBLE_SPACE_LINES = False
 INDENT_LINES = True
+SHELLOUTS = True
 
 short_options = "cCdDM:t:Tw:W:hv"
 long_options = [
@@ -65,7 +66,7 @@ for option in options:
         )
         sys.exit(0)
     elif option == "-v" or option == "--version":
-        print("typ (Typset) v2.0.0")
+        print("typ (Typset) v2.1.0")
         sys.exit(0)
     elif option == "-c" or option == "--no-center-chapters":
         CENTER_CHAPTERS = False
@@ -164,21 +165,74 @@ else:
     with open(input_file, mode="r", encoding="utf8") as text_file:
         all_lines = text_file.read().splitlines()
 
+
 command_mode = False
 last_line_note = False
 last_line_centered = False
+last_line_command = False
 header_centered = False
-for lines in all_lines:
+number_output = False
+current_number = 0
+new_paragraph = False
+
+
+# Neither function nor procedure.
+# Has side-effects AND returns a value.
+# Sorry.
+def add_number(line: str):
+    padding = PAGE_WIDTH - (len(line) + len(f"({current_number})"))
+    if number_output is False or (index != number_output):
+        return line
+    if padding <= 0:
+        return line
+    return line + " " * padding + f"({current_number})"
+
+
+for source_line_number, lines in enumerate(all_lines):
+    source_line_number += 1
     lines = lines.strip()
-    if lines.startswith("!"):
+    if not lines:
+        continue
+    if lines.startswith("!") and SHELLOUTS:
+        if lines[1] == "!":
+            lines = lines[1:]
+            number_output = True
+            current_number += 1
+        else:
+            number_output = False
+
         if not CENTER_COMMANDS:
             print()
+
         command_mode = True
         lines = os.popen(lines[1:]).read().splitlines()
+
+        if number_output:
+            number_output = len(lines) // 2 - (not (len(lines) % 2))
+            i = -1
+            while lines[number_output].strip()[i] not in set.difference(
+                set(string.printable), set(string.whitespace), set(["|", "*"])
+            ):
+                i -= 1
+                if not len(lines[number_output]) + i:
+                    new_paragraph = False
+                    break
+            else:
+                new_paragraph = lines[number_output].strip()[i] == "."
+
+        # Pad the command, so that it is centered properly.
+        pad_width = max(len(line) for line in lines)
+        lines = [line + (pad_width - len(line)) * " " for line in lines]
+        last_line_command = True
     else:
         lines = [lines.strip()]
+        if number_output is not False:
+            number_output = False
+        else:
+            last_line_command = False
+            new_paragraph = False
 
-    for line in lines:
+    for index, line in enumerate(lines):
         # Skip lines starting with #
         if line.startswith("#"):
             continue
@@ -204,12 +258,13 @@ for lines in all_lines:
                 center_room = PAGE_WIDTH - len(line) - MARGIN_WIDTH
                 spacing = center_room // 2
                 line = f"{' '*(spacing + MARGIN_WIDTH)}{line}"
-                print(line)
+
+                print(add_number(line))
             elif len(line) <= PAGE_WIDTH:
                 center_room = PAGE_WIDTH - len(line)
                 spacing = center_room // 2
                 line = f"{' '*(spacing)}{line}"
-                print(line)
+                print(add_number(line))
             else:
                 words = line.split(" ")
                 line = " " * (MARGIN_WIDTH - 1)
@@ -230,7 +285,7 @@ for lines in all_lines:
                         center_room = PAGE_WIDTH - len(line)
                         spacing = center_room // 2
                         line = f"{' '*(spacing)}{line}"
-                        print(line)
+                        print(add_number(line))
                         line = f"{' ' * MARGIN_WIDTH} {word}"
                     else:
                         line = f"{line} {word}"
@@ -238,7 +293,7 @@ for lines in all_lines:
                     center_room = PAGE_WIDTH - len(line)
                     spacing = center_room // 2
                     line = f"{' '*(spacing)}{line}"
-                    print(line)
+                    print(add_number(line))
 
         else:
             first_line = True
@@ -252,7 +307,15 @@ for lines in all_lines:
 
             line = (
                 " " * TAB_WIDTH
-                if INDENT_LINES and not line.startswith("//") and not command_mode
+                if (
+                    (
+                        INDENT_LINES
+                        and not line.startswith("//")
+                        and not command_mode
+                        and not last_line_command
+                    )
+                    or (new_paragraph and last_line_command)
+                )
                 else " " * MARGIN_WIDTH
             )
             if words[0].startswith("//"):

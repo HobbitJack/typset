@@ -9,6 +9,8 @@ import stat
 import os
 import sys
 
+CONVERT = False
+CONVERT_IN_SHELLOUTS = False
 SEQUENCES = {
     "\\": "\\",
     "alpha": "α",
@@ -60,6 +62,7 @@ SEQUENCES = {
     "Psi": "Ψ",
     "Omega": "Ω",
     "approx": "≈",
+    "equiv": "≡",
     "pm": "±",
     "mp": "∓",
     "sqrt": "√",
@@ -92,10 +95,12 @@ SEQUENCES = {
     "Leftarrow": "⇐",
     "rightarrow": "→",
     "Rightarrow": "⇒",
+    "angstrom": "Å",
 }
 
-short_options = "Hhv"
+short_options = "cHhv"
 long_options = [
+    "convert-character",
     "sequences",
     "help",
     "version",
@@ -118,12 +123,19 @@ for option in options:
         sys.exit(0)
     if option == "-h" or option == "--help":
         print("Usage: chr [FILE]")
+        print("Usage: chr -c SEQUENCE..")
         print("Usage: chr -H")
         print("Replace escape sequences with special characters.")
         sys.exit(0)
     elif option == "-v" or option == "--version":
-        print("chr (Typset) v2.0.0")
+        print("chr (Typset) v2.1.0")
         sys.exit(0)
+
+if CONVERT:
+    for sequence in positional_arguments:
+        if sequence in SEQUENCES:
+            print(SEQUENCES[sequence])
+    sys.exit(0)
 
 if not positional_arguments:
     if stat.S_ISFIFO(os.fstat(0).st_mode):
@@ -156,7 +168,9 @@ else:
         all_lines = text_file.read().splitlines()
 
 for line in all_lines:
-    if "\\" not in line:
+    if line.strip().startswith("\\") or (
+        line.strip().startswith("!") and not (CONVERT_IN_SHELLOUTS)
+    ):
         print(line)
     else:
         new_string = ""
