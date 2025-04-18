@@ -205,20 +205,34 @@ for source_line_number, lines in enumerate(all_lines):
             print()
 
         command_mode = True
-        lines = os.popen(lines[1:]).read().splitlines()
+        command = os.popen(lines[1:])
+        temp_lines = command.read().splitlines()
+        if not command.close():
+            lines = temp_lines
 
         if number_output:
             number_output = len(lines) // 2 - (not (len(lines) % 2))
-            i = -1
-            while lines[number_output].strip()[i] not in set.difference(
-                set(string.printable), set(string.whitespace), set(["|", "*"])
-            ):
-                i -= 1
-                if not len(lines[number_output]) + i:
-                    new_paragraph = False
-                    break
-            else:
-                new_paragraph = lines[number_output].strip()[i] == "."
+
+            line_true_length = []
+            for line in lines:
+                i = -1
+                if not line.strip():
+                    continue
+
+                while (len(line) + i) and (
+                    line.strip()[i]
+                    not in set.difference(
+                        set(string.printable), set(string.whitespace), set(["|", "*"])
+                    )
+                ):
+                    i -= 1
+                line_true_length.append(len(line.strip()) + i)
+            new_paragraph = (
+                lines[line_true_length.index(max(line_true_length))][
+                    len(line.strip()) - max(line_true_length)
+                ]
+                == "."
+            )
 
         # Pad the command, so that it is centered properly.
         pad_width = max(len(line) for line in lines)
