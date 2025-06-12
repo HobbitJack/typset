@@ -19,7 +19,6 @@ import os
 import sys
 import string
 
-AFTER_PERIOD_SPACES = 1
 PAGE_WIDTH = 84
 TARGET_WIDTH = 0
 TAB_WIDTH = 4
@@ -165,7 +164,6 @@ else:
     with open(input_file, mode="r", encoding="utf8") as text_file:
         all_lines = text_file.read().splitlines()
 
-
 command_mode = False
 last_line_note = False
 last_line_centered = False
@@ -189,7 +187,6 @@ def add_number(line: str):
 
 
 for source_line_number, lines in enumerate(all_lines):
-    source_line_number += 1
     lines = lines.strip()
     if not lines:
         continue
@@ -266,7 +263,8 @@ for source_line_number, lines in enumerate(all_lines):
             if last_line_centered:
                 header_centered = True
             else:
-                print()
+                if source_line_number:
+                    print()
             last_line_centered = True
             if len(line) + MARGIN_WIDTH <= PAGE_WIDTH:
                 center_room = PAGE_WIDTH - len(line) - MARGIN_WIDTH

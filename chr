@@ -96,11 +96,12 @@ SEQUENCES = {
     "rightarrow": "→",
     "Rightarrow": "⇒",
     "angstrom": "Å",
+    "degree": "°",
 }
 
 short_options = "cHhv"
 long_options = [
-    "convert-character",
+    "convert-characters",
     "sequences",
     "help",
     "version",
@@ -117,6 +118,8 @@ except getopt.GetoptError as error:
 for option in options:
     argument = option[1]
     option = option[0]
+    if option == "-c" or option == "--convert-characters":
+        CONVERT = True
     if option == "-H" or option == "--sequences":
         for entry, char in SEQUENCES.items():
             print(f"{entry}\t{char}")

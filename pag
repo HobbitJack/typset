@@ -6,32 +6,34 @@
 # It then outputs a modified text file, where pages are separated by formfeeds and each has a header.
 import datetime
 import getopt
+import math
 import stat
 import os
 import sys
 
 HEADER_MODE = True
-MLA_HEADER_MODE = False
-US_MODE = True
-NAME = ""
+NAME = "Page"
 TODAY = datetime.date.today()
 
-FIRST_PAGE_NUMBER = 1
-PAGE_LENGTH = 66  # Three lines taken off for spacing at the bottom
+FIRST_PAGE_NUMBER = False
+PAGE_LENGTH = 66
 # These two are only used for right-aligning page number
+VERTICAL_MARGIN = 1
 PAGE_WIDTH = 84
-MARGIN_WIDTH = 0
+MARGIN_WIDTH = 1
 
-short_options = "D:HL:mM:n:N:Uw:hv"
+TITLE_LINES = 0
+
+short_options = "D:HL:M:n:N:T:V:w:hv"
 long_options = [
     "date=",
     "no-header-mode",
     "page-length=",
-    "mla-header-mode",
     "margin-width=",
     "first-page-number=",
     "name",
-    "no-us-mode",
+    "vertical-margin=",
+    "title-page=",
     "page-width=",
     "help",
     "version",
@@ -68,8 +70,6 @@ for option in options:
         except ValueError:
             print(f"pag: '{PAGE_LENGTH}': Invalid page length", file=sys.stderr)
             sys.exit(1)
-    elif option == "-m" or option == "--mla-header-mode":
-        MLA_HEADER_MODE = True
     elif option == "-M" or option == "--margin-width":
         try:
             MARGIN_WIDTH = int(argument)
@@ -81,13 +81,21 @@ for option in options:
     elif option == "-n" or option == "--first-page-number":
         try:
             FIRST_PAGE_NUMBER = int(argument)
-            if FIRST_PAGE_NUMBER < 0:
-                raise ValueError
         except ValueError:
             print(f"pag: '{FIRST_PAGE_NUMBER}': Invalid page number", file=sys.stderr)
             sys.exit(1)
     elif option == "-N" or option == "--name":
-        NAME = argument.strip().split(" ")[-1]
+        NAME = argument.strip()
+    elif option == "-V" or option == "--vertical-margin":
+        try:
+            VERTICAL_MARGIN = int(argument)
+            if VERTICAL_MARGIN < 0:
+                raise ValueError
+        except ValueError:
+            print(f"pag: '{VERTICAL_MARGIN}': Invalid vertical margin", file=sys.stderr)
+            sys.exit(1)
+    elif option == "-T" or option == "--title-page":
+        TITLE_LINES = int(argument)
     elif option == "-w" or option == "--page-width":
         try:
             PAGE_WIDTH = int(argument)
@@ -97,12 +105,14 @@ for option in options:
             print(f"pag: '{PAGE_WIDTH}': Invalid page width", file=sys.stderr)
             sys.exit(1)
 
+if FIRST_PAGE_NUMBER is False:
+    FIRST_PAGE_NUMBER = 0 if TITLE_LINES else 1
 
 if PAGE_LENGTH < 10:
     HEADER_MODE = False
 
-# For the footer and header blank lines
-PAGE_LENGTH -= 3
+# Remove lines for bottom and top margins, plus one extra line at the bottom
+PAGE_LENGTH -= (MARGIN_WIDTH * 2) - 1
 
 if not positional_arguments:
     if stat.S_ISFIFO(os.fstat(0).st_mode):
@@ -134,43 +144,91 @@ else:
     with open(input_file, mode="r", encoding="utf8") as text_file:
         all_lines = text_file.read().splitlines()
 
+
+def roman_numeral(num: int) -> str:
+    chars = {
+        1: "I",
+        5: "V",
+        10: "X",
+        50: "L",
+        100: "C",
+        500: "D",
+        1000: "M",
+        5000: "G",
+        10000: "H",
+    }
+
+    if not isinstance(num, int):
+        raise TypeError
+
+    numeral = ""
+
+    power = 10 ** int(math.log10(num))
+    while num:
+        most_significant_digit = int(num / power)
+
+        if most_significant_digit <= 3:
+            numeral += chars[power] * most_significant_digit
+        elif most_significant_digit == 4:
+            numeral += chars[power] + chars[power * 5]
+        elif 5 <= most_significant_digit <= 8:
+            numeral += chars[power * 5] + chars[power] * (most_significant_digit - 5)
+        elif most_significant_digit == 9:
+            numeral += chars[power] + chars[power * 10]
+
+        num = int(num / 10)
+    return numeral
+
+
+def get_page_number_str(page_number: int):
+    if not page_number:
+        return ""
+    elif page_number > 0:
+        return str(page_number)
+    else:
+        return roman_numeral(abs(FIRST_PAGE_NUMBER) + page_number + 1)
+
+
+# Add vertical centering
+if TITLE_LINES:
+    for _ in range(
+        (PAGE_LENGTH - abs(TITLE_LINES) * (2 if TITLE_LINES < 0 else 1)) // 2
+    ):
+        print()
+
 page_number = FIRST_PAGE_NUMBER
 lines_on_page = 0
 in_header = True
 for line in all_lines:
-    if HEADER_MODE and in_header:
-        if not MLA_HEADER_MODE:
-            print(
-                f"\n{' ' * MARGIN_WIDTH}{TODAY.month if US_MODE else TODAY.day}/{TODAY.day if US_MODE else TODAY.month}/{TODAY.year}{' '*(PAGE_WIDTH - MARGIN_WIDTH * 2 - 14 - (4 - len(NAME if NAME else 'Page')) - len(str(page_number)))}{NAME if NAME else 'Page'} {page_number}\n"
-            )
+    if TITLE_LINES:
+        TITLE_LINES += 1 if TITLE_LINES < 0 else -1
+        print(line)
+        lines_on_page += 1
+        if TITLE_LINES < 0:
+            print()
             lines_on_page += 1
-            in_header = False
+
+        if not TITLE_LINES:
+            for _ in range((PAGE_LENGTH - lines_on_page) // 2):
+                print()
+            print("\f", end="")
+            lines_on_page = 0
+            page_number += 1
+        continue
+
+    if HEADER_MODE and in_header:
+        if page_number:
+            print(
+                f"{'\n' * VERTICAL_MARGIN}{' ' * MARGIN_WIDTH}{TODAY.month:>02}/{TODAY.day:>02}/{TODAY.year:>04}{' '*(PAGE_WIDTH - MARGIN_WIDTH * 2 - 10 - len(NAME) - len(get_page_number_str(page_number)))}{NAME} {get_page_number_str(page_number)}\n"
+            )
         else:
-            if lines_on_page == 0:
-                if not NAME and page_number == 1:
-                    NAME = line.strip().split(" ")[-1]
-                print(
-                    f"\n{' '*(PAGE_WIDTH - MARGIN_WIDTH * 2 - len(NAME) - len(str(page_number)))}{NAME} {page_number}"
-                )
-                print(line)
-                lines_on_page += 2
-                continue
-            if page_number == 1 and lines_on_page <= 6:
-                if 2 < lines_on_page < 4:
-                    print(line)
-                    lines_on_page += 1
-                    continue
-                elif lines_on_page == 5:
-                    print(line.lower().title())
-                    lines_on_page += 1
-                    continue
-                elif lines_on_page == 6 and not line:
-                    lines_on_page += 1
-                    in_header = False
-                    continue
+            print()
+        lines_on_page += 1
+        in_header = False
 
     print(line)
     lines_on_page += 1
+
     if lines_on_page == PAGE_LENGTH or (
         len({char for char in line.strip()}) == 1 and line.strip()[0] == "-"
     ):
