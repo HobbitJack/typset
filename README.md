@@ -1,4 +1,8 @@
 # typset
+
+## This project sucks.
+## I'm archiving it because it sucks. Please don't use it.
+
 A very simple Unix pipeline-based typesetting package.
 
 As of version v2.0.0, ``typset`` consists of five tools.
